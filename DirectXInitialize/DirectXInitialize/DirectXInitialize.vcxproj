@@ -83,16 +83,22 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="D3DApp.h" />
+    <ClInclude Include="GameTimer.h" />
+    <ClInclude Include="InitDirect3DApp.h" />
     <ClInclude Include="RHID3D11Device.h" />
-    <ClInclude Include="DirectXInitialize.h" />
+    <ClInclude Include="AppMain.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="D3DApp.cpp" />
+    <ClCompile Include="GameTimer.cpp" />
+    <ClCompile Include="InitDirect3DApp.cpp" />
     <ClCompile Include="RHID3D11Device.cpp" />
-    <ClCompile Include="DirectXInitialize.cpp" />
+    <ClCompile Include="AppMain.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

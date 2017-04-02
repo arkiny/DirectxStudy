@@ -19,6 +19,8 @@
 // 7. 깊이 스탠실 뷰를 렌더링 파이프 출력 병합기 단계에 설정
 // 8. 뷰포트 설정
 
+// 설명용 파일로 Deprecated
+
 class RHID3D11Device
 {
 public:
@@ -30,10 +32,8 @@ public:
 	}
 	
 	bool Initialize();
-
-	
-
 	bool Release();
+
 
 private:
 	RHID3D11Device();

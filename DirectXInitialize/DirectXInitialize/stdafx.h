@@ -10,6 +10,7 @@
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 // Windows Header Files:
 #include <windows.h>
+#include <WindowsX.h>
 
 // C RunTime Header Files
 #include <stdlib.h>
@@ -17,14 +18,23 @@
 #include <memory.h>
 #include <tchar.h>
 #include <assert.h>
+#include <string>
+#include <sstream>
 
 // TODO: reference additional headers your program requires here
 #include <d3d11.h>
 #include <DxErr.h>
+#include <stdio.h>
+#include <xnamath.h>
 #include "Settings.h"
-#include "RHID3D11Device.h"
+#include "GameTimer.h"
+#include "D3DApp.h"
 
-extern WindowSettings GSettings;
+//#include "RHID3D11Device.h"
+
+
+//extern WindowSettings GSettings;
+//extern GameTimer gGameTimer;
 
 #define SAFE_RELEASE(p) {if(p){p->Release();p=nullptr;}}
 
