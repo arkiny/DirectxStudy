@@ -4,7 +4,7 @@ class Node
 {
 public:
 	Node(int InValue) : value(InValue) {}
-	~Node() {}
+	~Node();
 
 	Node* GetLeft() { return pLeft; }
 	Node* GetRight() { return pRight; }

@@ -1,6 +1,11 @@
 #include "stdafx.h"
 #include "BinarySearchTree.h"
 
+inline Node::~Node() 
+{
+	std::cout << "Delete : " << GetValue() << std::endl;
+}
+
 void Node::Insert(int InValue)
 {
 	if (InValue <= value)
@@ -48,32 +53,16 @@ void Node::Destroy()
 {
 	if (Node* LeftNode = GetLeft())
 	{
-		if (LeftNode->GetLeft() == nullptr && LeftNode->GetRight() == nullptr)
-		{
-			std::cout << "delete : " << LeftNode->GetValue() << std::endl;
-			delete LeftNode;
-			SetLeft(nullptr);
-		}
-		else
-		{
-			LeftNode->Destroy();
-		}
+		LeftNode->Destroy();
+		SetLeft(nullptr);
 	}
 	if (Node* RightNode = GetRight())
 	{
-		if (RightNode->GetLeft() == nullptr && RightNode->GetRight() == nullptr)
-		{
-			std::cout << "delete : " << RightNode->GetValue() << std::endl;
-			delete RightNode;
-			SetRight(nullptr);
-		}
-		else
-		{
-			RightNode->Destroy();
-		}
+		RightNode->Destroy();
+		SetRight(nullptr);
 	}
-	
-	
+
+	delete this;
 }
 
 void BinarySearchTree::Insert(int Value)
@@ -92,12 +81,14 @@ void BinarySearchTree::PrintAll()
 {
 	if (pRoot)
 	{
+		std::cout << "Print out :: " ;
 		pRoot->Print();
 	}
 	else
 	{
 		std::cout << "Empty Tree" << std::endl;
 	}
+	std::cout << std::endl;
 }
 
 void BinarySearchTree::Destroy()
