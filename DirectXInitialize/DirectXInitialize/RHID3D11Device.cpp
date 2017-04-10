@@ -184,7 +184,8 @@ bool RHID3D11Device::CreateSwapChain()
 	//} DXGI_MODE_DESC;
 
 
-	HRESULT Result = D3D11Device->CheckMultisampleQualityLevels(DXGI_FORMAT_B8G8R8X8_UNORM, GSettings.MSAASampleNum, &GSettings.MSAAQuality);
+	HRESULT Result = D3D11Device->CheckMultisampleQualityLevels
+		(DXGI_FORMAT_B8G8R8X8_UNORM, GSettings.MSAASampleNum, &GSettings.MSAAQuality);
 	if (Result == 0)
 	{
 		GSettings.bEnableMSAA = true;
