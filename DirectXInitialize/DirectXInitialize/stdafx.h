@@ -22,35 +22,36 @@
 #include <sstream>
 
 // TODO: reference additional headers your program requires here
-#include <d3d11.h>
-#include <DxErr.h>
-#include <stdio.h>
-#include <xnamath.h>
+//#include <d3d11.h>
+//#include <DxErr.h>
+//#include <stdio.h>
+//#include <xnamath.h>
 #include "Settings.h"
 #include "GameTimer.h"
+#include "d3dUtil.h"
 #include "D3DApp.h"
 
 //#include "RHID3D11Device.h"
 
 
 //extern WindowSettings GSettings;
-//extern GameTimer gGameTimer;
+extern GameTimer gGameTimer;
 
 #define SAFE_RELEASE(p) {if(p){p->Release();p=nullptr;}}
-
-#if defined(DEBUG) | defined(_DEBUG)
-#ifndef HR
-#define HR(x)                                              \
-	{                                                          \
-		HRESULT hr = (x);                                      \
-		if(FAILED(hr))                                         \
-						{                                                      \
-			DXTrace(__FILE__, (DWORD)__LINE__, hr, L#x, true); \
-						}                                                      \
-	}
-#endif
-#else
-#ifndef HR
-#define HR(x) (x)
-#endif
-#endif 
+//
+//#if defined(DEBUG) | defined(_DEBUG)
+//#ifndef HR
+//#define HR(x)                                              \
+//	{                                                          \
+//		HRESULT hr = (x);                                      \
+//		if(FAILED(hr))                                         \
+//						{                                                      \
+//			DXTrace(__FILE__, (DWORD)__LINE__, hr, L#x, true); \
+//						}                                                      \
+//	}
+//#endif
+//#else
+//#ifndef HR
+//#define HR(x) (x)
+//#endif
+//#endif 

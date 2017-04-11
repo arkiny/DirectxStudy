@@ -17,6 +17,15 @@
     <Filter Include="Chapter4.4">
       <UniqueIdentifier>{ab22c0fb-548e-46dc-a23e-a1e6488fe8e3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{bba8a0e1-6e22-4249-b5d1-ad8aa26a38d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Chapter6">
+      <UniqueIdentifier>{30a6374f-df93-4b17-9f73-f20c904b25b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Chapter6\Box">
+      <UniqueIdentifier>{3d530a17-0b64-4294-9606-062d960a14ac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -47,6 +56,21 @@
     <ClInclude Include="InitDirect3DApp.h">
       <Filter>Chapter4.4</Filter>
     </ClInclude>
+    <ClInclude Include="d3dx11effect.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="MathHelper.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="d3dUtil.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="LightHelper.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="BoxApp.h">
+      <Filter>Chapter6\Box</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RHID3D11Device.cpp">
@@ -68,6 +92,18 @@
     <ClCompile Include="InitDirect3DApp.cpp">
       <Filter>Chapter4.4</Filter>
     </ClCompile>
+    <ClCompile Include="MathHelper.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="d3dUtil.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="LightHelper.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="BoxApp.cpp">
+      <Filter>Chapter6\Box</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DirectXInitialize.rc">
@@ -81,5 +117,10 @@
     <Image Include="DirectXInitialize.ico">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\FX\color.fx">
+      <Filter>Chapter6\Box</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

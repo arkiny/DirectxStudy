@@ -11,6 +11,7 @@ int main()
 	Tree.Insert(7);
 	Tree.Insert(1);
 	Tree.Insert(3);
+	Tree.Insert(8);
 	Tree.PrintAll();
 
 	Tree.Destroy();

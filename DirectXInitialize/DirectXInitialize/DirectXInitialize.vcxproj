@@ -14,6 +14,7 @@
     <ProjectGuid>{35997AFA-55A3-4967-BDFB-4169975E49DE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>DirectXInitialize</RootNamespace>
+    <ProjectName>DirectX11</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -83,9 +84,14 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BoxApp.h" />
     <ClInclude Include="D3DApp.h" />
+    <ClInclude Include="d3dUtil.h" />
+    <ClInclude Include="d3dx11effect.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="InitDirect3DApp.h" />
+    <ClInclude Include="LightHelper.h" />
+    <ClInclude Include="MathHelper.h" />
     <ClInclude Include="RHID3D11Device.h" />
     <ClInclude Include="AppMain.h" />
     <ClInclude Include="Resource.h" />
@@ -94,9 +100,13 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BoxApp.cpp" />
     <ClCompile Include="D3DApp.cpp" />
+    <ClCompile Include="d3dUtil.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="InitDirect3DApp.cpp" />
+    <ClCompile Include="LightHelper.cpp" />
+    <ClCompile Include="MathHelper.cpp" />
     <ClCompile Include="RHID3D11Device.cpp" />
     <ClCompile Include="AppMain.cpp" />
     <ClCompile Include="Settings.cpp" />
@@ -111,6 +121,9 @@
   <ItemGroup>
     <Image Include="DirectXInitialize.ico" />
     <Image Include="small.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\FX\color.fx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

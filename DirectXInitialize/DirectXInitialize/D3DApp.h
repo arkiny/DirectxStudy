@@ -59,7 +59,7 @@ protected:
 
 	D3D11_VIEWPORT mScreenViewport;
 
-	std::wstring mMainWndCaption = L"D3D!1Application";
+	std::wstring mMainWndCaption = L"D3D11Application";
 
 	D3D_DRIVER_TYPE md3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
 
