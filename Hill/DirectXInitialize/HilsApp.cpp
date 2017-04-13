@@ -1,5 +1,71 @@
+//***************************************************************************************
+// HillsDemo.cpp by Frank Luna (C) 2011 All Rights Reserved.
+//
+// Demonstrates drawing hills using a grid and 2D function to set the height of each vertex.
+//
+// Controls:
+//		Hold the left mouse button down and move the mouse to rotate.
+//      Hold the right mouse button down to zoom in and out.
+//
+//***************************************************************************************
+
 #include "stdafx.h"
-#include "HillsApp.h"
+#include "D3DApp.h"
+#include "d3dx11Effect.h"
+#include "GeometryGenerator.h"
+#include "MathHelper.h"
+
+struct Vertex
+{
+	XMFLOAT3 Pos;
+	XMFLOAT4 Color;
+};
+
+class HillsApp : public D3DApp
+{
+public:
+	HillsApp(HINSTANCE hInstance);
+	~HillsApp();
+
+	bool Init();
+	void OnResize();
+	void UpdateScene(float dt);
+	void DrawScene();
+
+	void OnMouseDown(WPARAM btnState, int x, int y);
+	void OnMouseUp(WPARAM btnState, int x, int y);
+	void OnMouseMove(WPARAM btnState, int x, int y);
+
+private:
+	float GetHeight(float x, float z)const;
+	void BuildGeometryBuffers();
+	void BuildFX();
+	void BuildVertexLayout();
+
+private:
+	ID3D11Buffer* mVB;
+	ID3D11Buffer* mIB;
+
+	ID3DX11Effect* mFX;
+	ID3DX11EffectTechnique* mTech;
+	ID3DX11EffectMatrixVariable* mfxWorldViewProj;
+
+	ID3D11InputLayout* mInputLayout;
+
+	// Define transformations from local spaces to world space.
+	XMFLOAT4X4 mGridWorld;
+
+	UINT mGridIndexCount;
+
+	XMFLOAT4X4 mView;
+	XMFLOAT4X4 mProj;
+
+	float mTheta;
+	float mPhi;
+	float mRadius;
+
+	POINT mLastMousePos;
+};
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
@@ -19,21 +85,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 
 
 HillsApp::HillsApp(HINSTANCE hInstance)
-	:D3DApp(hInstance)
-	, mTheta(1.5f * MathHelper::Pi), mPhi(0.25f * MathHelper::Pi), mRadius(8)
+	: D3DApp(hInstance), mVB(0), mIB(0), mFX(0), mTech(0),
+	mfxWorldViewProj(0), mInputLayout(0), mGridIndexCount(0),
+	mTheta(1.5f*MathHelper::Pi), mPhi(0.1f*MathHelper::Pi), mRadius(200.0f)
 {
-	mMainWndCaption = L"BoxDemo";
+	mMainWndCaption = L"Hills Demo";
 
-	XMMATRIX I = XMMatrixIdentity();
-	
-	XMStoreFloat4x4(&mWorld, I);
-	XMStoreFloat4x4(&mView, I);
-	XMStoreFloat4x4(&mProj, I);
-	
 	mLastMousePos.x = 0;
 	mLastMousePos.y = 0;
-}
 
+	XMMATRIX I = XMMatrixIdentity();
+	XMStoreFloat4x4(&mGridWorld, I);
+	XMStoreFloat4x4(&mView, I);
+	XMStoreFloat4x4(&mProj, I);
+}
 
 HillsApp::~HillsApp()
 {
@@ -59,19 +124,18 @@ void HillsApp::OnResize()
 {
 	D3DApp::OnResize();
 
-	// 윈도우가 재조정 되면, 종횡비와 프로젝션 매트릭스를 재계산해줘야 합니다.
 	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
 }
 
 void HillsApp::UpdateScene(float dt)
 {
-	// 스피리컬 각도를 카테시안 좌표로 변환해줍니다.
+	// Convert Spherical to Cartesian coordinates.
 	float x = mRadius*sinf(mPhi)*cosf(mTheta);
 	float z = mRadius*sinf(mPhi)*sinf(mTheta);
 	float y = mRadius*cosf(mPhi);
 
-	// 뷰 매트릭스를 생성해줍니다. 
+	// Build the view matrix.
 	XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
 	XMVECTOR target = XMVectorZero();
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -131,32 +195,37 @@ void HillsApp::OnMouseMove(WPARAM btnState, int x, int y)
 {
 	if ((btnState & MK_LBUTTON) != 0)
 	{
-		// 각각의 픽셀움직임을 .25도로 치환
+		// Make each pixel correspond to a quarter of a degree.
 		float dx = XMConvertToRadians(0.25f*static_cast<float>(x - mLastMousePos.x));
 		float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
 
-		// 궤도 카메라로 업데이트
+		// Update angles based on input to orbit camera around box.
 		mTheta += dx;
 		mPhi += dy;
 
-		// 각도 제한.
+		// Restrict the angle mPhi.
 		mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
 	}
 	else if ((btnState & MK_RBUTTON) != 0)
 	{
-		// 한 픽셀당 0.005 유닛을 움직이게 처리
-		float dx = 0.005f*static_cast<float>(x - mLastMousePos.x);
-		float dy = 0.005f*static_cast<float>(y - mLastMousePos.y);
+		// Make each pixel correspond to 0.2 unit in the scene.
+		float dx = 0.2f*static_cast<float>(x - mLastMousePos.x);
+		float dy = 0.2f*static_cast<float>(y - mLastMousePos.y);
 
-		// 인풋에 따른 카메라 반경 조절
+		// Update the camera radius based on input.
 		mRadius += dx - dy;
 
-		// 각도 제한
-		mRadius = MathHelper::Clamp(mRadius, 3.0f, 15.0f);
+		// Restrict the radius.
+		mRadius = MathHelper::Clamp(mRadius, 50.0f, 500.0f);
 	}
 
 	mLastMousePos.x = x;
 	mLastMousePos.y = y;
+}
+
+float HillsApp::GetHeight(float x, float z)const
+{
+	return 0.3f*(z*sinf(0.1f*x) + x*cosf(0.1f*z));
 }
 
 void HillsApp::BuildGeometryBuffers()
@@ -342,43 +411,21 @@ void HillsApp::BuildFX()
 	ReleaseCOM(compiledShader);
 
 	mTech = mFX->GetTechniqueByName("ColorTech"); // 테크를 가져와서 저장
-	mfxWorldViewProj = mFX->GetVariableByName("gWorldViewProj")->AsMatrix(); // 상수 매트릭스 바인딩을 위해 포인터 저장
+	mfxWorldViewProj = mFX->GetVariableByName("gWorldViewProj")->AsMatrix(); // 상수 매트릭스
 }
 
 void HillsApp::BuildVertexLayout()
 {
-	// 정점 구조체의 각성분이 어떤 용도인지 설정
-
-	// 버텍스 시만텍 및 레이아웃 설정
+	// Create the vertex input layout.
 	D3D11_INPUT_ELEMENT_DESC vertexDesc[] =
 	{
-		// 시만텍 문자열 이름, 시만텍에 부여된 인덱스, 성분의 자료형식, 정점 버퍼슬롯의 색인, 오프셋 (포지션의 경우 0이지만, 컬러 성분은 12바이트 건너뛰어서 처리해야한다), 인스탄스인지 설정, 인스턴스 스텝 레이트)
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 
-	// 인풋 레이아웃 생성
+	// Create the input layout
 	D3DX11_PASS_DESC passDesc;
 	mTech->GetPassByIndex(0)->GetDesc(&passDesc);
-	// 입력배치 생성
-
-	//virtual HRESULT STDMETHODCALLTYPE CreateInputLayout(
-	//	/* [annotation] */ 정점 구조체를 서술하는 D3D11_INPUT_ELEMENT_DESC 배열
-	//	__in_ecount(NumElements)  const D3D11_INPUT_ELEMENT_DESC *pInputElementDescs,
-	//	/* [annotation] */ 배열의 원소 개수
-	//	__in_range(0, D3D11_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT)  UINT NumElements,
-	//	/* [annotation] */ 정점 쉐이더를 컴파일해서 얻은 바이트코드를 가리키는 포인터
-	//	__in  const void *pShaderBytecodeWithInputSignature,
-	//	/* [annotation] */ 바이트 코드의 크기
-	//	__in  SIZE_T BytecodeLength,
-	//	/* [annotation] */ 생성된 입력 배치
-	//	__out_opt  ID3D11InputLayout **ppInputLayout) = 0;
-
 	HR(md3dDevice->CreateInputLayout(vertexDesc, 2, passDesc.pIAInputSignature,
 		passDesc.IAInputSignatureSize, &mInputLayout));
-}
-
-float HillsApp::GetHeight(float x, float z)const
-{
-	return 0.3f*(z*sinf(0.1f*x) + x*cosf(0.1f*z));
 }
