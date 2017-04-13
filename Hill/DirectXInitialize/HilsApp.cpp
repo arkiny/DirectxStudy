@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "BoxApp.h"
+#include "HillsApp.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
@@ -9,7 +9,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
-	BoxApp theApp(hInstance);
+	HillsApp theApp(hInstance);
 
 	if (!theApp.Init())
 		return 0;
@@ -18,7 +18,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 }
 
 
-BoxApp::BoxApp(HINSTANCE hInstance)
+HillsApp::HillsApp(HINSTANCE hInstance)
 	:D3DApp(hInstance)
 	, mTheta(1.5f * MathHelper::Pi), mPhi(0.25f * MathHelper::Pi), mRadius(8)
 {
@@ -35,15 +35,15 @@ BoxApp::BoxApp(HINSTANCE hInstance)
 }
 
 
-BoxApp::~BoxApp()
+HillsApp::~HillsApp()
 {
-	ReleaseCOM(mBoxVB);
-	ReleaseCOM(mBoxIB);
+	ReleaseCOM(mVB);
+	ReleaseCOM(mIB);
 	ReleaseCOM(mFX);
 	ReleaseCOM(mInputLayout);
 }
 
-bool BoxApp::Init()
+bool HillsApp::Init()
 {
 	if (!D3DApp::Init())
 		return false;
@@ -55,7 +55,7 @@ bool BoxApp::Init()
 	return true;
 }
 
-void BoxApp::OnResize()
+void HillsApp::OnResize()
 {
 	D3DApp::OnResize();
 
@@ -64,7 +64,7 @@ void BoxApp::OnResize()
 	XMStoreFloat4x4(&mProj, P);
 }
 
-void BoxApp::UpdateScene(float dt)
+void HillsApp::UpdateScene(float dt)
 {
 	// 스피리컬 각도를 카테시안 좌표로 변환해줍니다.
 	float x = mRadius*sinf(mPhi)*cosf(mTheta);
@@ -80,48 +80,41 @@ void BoxApp::UpdateScene(float dt)
 	XMStoreFloat4x4(&mView, V);
 }
 
-void BoxApp::DrawScene()
+void HillsApp::DrawScene()
 {
 	md3dImmediateContext->ClearRenderTargetView(mRenderTargetView, reinterpret_cast<const float*>(&Colors::LightSteelBlue));
 	md3dImmediateContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	// 버텍스의 인풋 레이아웃 설정
 	md3dImmediateContext->IASetInputLayout(mInputLayout);
 	md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	// 버텍스 버퍼 바인딩
-	md3dImmediateContext->IASetVertexBuffers(0, 1, &mBoxVB, &stride, &offset);
-	// 인덱스 버퍼 바인딩
-	md3dImmediateContext->IASetIndexBuffer(mBoxIB, DXGI_FORMAT_R32_UINT, 0);
+	md3dImmediateContext->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
+	md3dImmediateContext->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
 
-	// 콘스탄트 버퍼 설정
-	XMMATRIX world = XMLoadFloat4x4(&mWorld);
+	// Set constants
+
 	XMMATRIX view = XMLoadFloat4x4(&mView);
 	XMMATRIX proj = XMLoadFloat4x4(&mProj);
+	XMMATRIX world = XMLoadFloat4x4(&mGridWorld);
 	XMMATRIX worldViewProj = world*view*proj;
 
-	// 바인딩 된 패러미터 설정 처리
-	mfxWorldViewProj->SetMatrix(reinterpret_cast<float*>(&worldViewProj));
-
-	// 테크닉 바인딩
 	D3DX11_TECHNIQUE_DESC techDesc;
 	mTech->GetDesc(&techDesc);
 	for (UINT p = 0; p < techDesc.Passes; ++p)
 	{
+		// Draw the grid.
+		mfxWorldViewProj->SetMatrix(reinterpret_cast<float*>(&worldViewProj));
 		mTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
-
-		// 그리기 호출에서 사용될 색인들의 갯수
-		// 첫색인의 위치
-		// 사용할 색인들에 더해지는 정수값
-		md3dImmediateContext->DrawIndexed(36, 0, 0);
+		md3dImmediateContext->DrawIndexed(mGridIndexCount, 0, 0);
 	}
 
 	HR(mSwapChain->Present(0, 0));
 }
 
-void BoxApp::OnMouseDown(WPARAM btnState, int x, int y)
+void HillsApp::OnMouseDown(WPARAM btnState, int x, int y)
 {
 	mLastMousePos.x = x;
 	mLastMousePos.y = y;
@@ -129,12 +122,12 @@ void BoxApp::OnMouseDown(WPARAM btnState, int x, int y)
 	SetCapture(mhMainWnd);
 }
 
-void BoxApp::OnMouseUp(WPARAM btnState, int x, int y)
+void HillsApp::OnMouseUp(WPARAM btnState, int x, int y)
 {
 	ReleaseCapture();
 }
 
-void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
+void HillsApp::OnMouseMove(WPARAM btnState, int x, int y)
 {
 	if ((btnState & MK_LBUTTON) != 0)
 	{
@@ -166,94 +159,85 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
 	mLastMousePos.y = y;
 }
 
-void BoxApp::BuildGeometryBuffers()
+void HillsApp::BuildGeometryBuffers()
 {
-	// 버텍스 버퍼 생성
-	Vertex vertices[] =
-	{
-		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), (const float*)&Colors::White },
-		{ XMFLOAT3(-1.0f, +1.0f, -1.0f), (const float*)&Colors::Black },
-		{ XMFLOAT3(+1.0f, +1.0f, -1.0f), (const float*)&Colors::Red },
-		{ XMFLOAT3(+1.0f, -1.0f, -1.0f), (const float*)&Colors::Green },
-		{ XMFLOAT3(-1.0f, -1.0f, +1.0f), (const float*)&Colors::Blue },
-		{ XMFLOAT3(-1.0f, +1.0f, +1.0f), (const float*)&Colors::Yellow },
-		{ XMFLOAT3(+1.0f, +1.0f, +1.0f), (const float*)&Colors::Cyan },
-		{ XMFLOAT3(+1.0f, -1.0f, +1.0f), (const float*)&Colors::Magenta }
-	};
+	GeometryGenerator::MeshData grid;
 
-	//typedef struct D3D11_BUFFER_DESC
-	//{
-	//	UINT ByteWidth; // 버퍼의 크기 (바이트)
-	//	D3D11_USAGE Usage; // 버퍼의 사용용도
-	//	UINT BindFlags; // 바인드 되는 버퍼의 사용처
-	//	UINT CPUAccessFlags; // CPU 가 버퍼에 접근 하는 방식 결정
-	//	UINT MiscFlags; // 정점버퍼는 쓸일이 없다.
-	//	UINT StructureByteStride; // 구조 버퍼일때 쓰는 원소 하나의 크기 
-	//} 	D3D11_BUFFER_DESC;
+	GeometryGenerator geoGen;
+
+	geoGen.CreateGrid(160.0f, 160.0f, 50, 50, grid);
+
+	mGridIndexCount = grid.Indices.size();
+
+	//
+	// Extract the vertex elements we are interested and apply the height function to
+	// each vertex.  In addition, color the vertices based on their height so we have
+	// sandy looking beaches, grassy low hills, and snow mountain peaks.
+	//
+
+	std::vector<Vertex> vertices(grid.Vertices.size());
+	for (size_t i = 0; i < grid.Vertices.size(); ++i)
+	{
+		XMFLOAT3 p = grid.Vertices[i].Position;
+
+		p.y = GetHeight(p.x, p.z);
+
+		vertices[i].Pos = p;
+
+		// Color the vertex based on its height.
+		if (p.y < -10.0f)
+		{
+			// Sandy beach color.
+			vertices[i].Color = XMFLOAT4(1.0f, 0.96f, 0.62f, 1.0f);
+		}
+		else if (p.y < 5.0f)
+		{
+			// Light yellow-green.
+			vertices[i].Color = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f);
+		}
+		else if (p.y < 12.0f)
+		{
+			// Dark yellow-green.
+			vertices[i].Color = XMFLOAT4(0.1f, 0.48f, 0.19f, 1.0f);
+		}
+		else if (p.y < 20.0f)
+		{
+			// Dark brown.
+			vertices[i].Color = XMFLOAT4(0.45f, 0.39f, 0.34f, 1.0f);
+		}
+		else
+		{
+			// White snow.
+			vertices[i].Color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+		}
+	}
 
 	D3D11_BUFFER_DESC vbd;
-	vbd.Usage = D3D11_USAGE_IMMUTABLE; // 올리고나선 수정하지 않을거
-	vbd.ByteWidth = sizeof(Vertex) * 8; // 사이즈 설정
-	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER; // 버텍스 버퍼에 바인딩 할것
-	vbd.CPUAccessFlags = 0; // cpu 접근 안할것
+	vbd.Usage = D3D11_USAGE_IMMUTABLE;
+	vbd.ByteWidth = sizeof(Vertex) * grid.Vertices.size();
+	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vbd.CPUAccessFlags = 0;
 	vbd.MiscFlags = 0;
-	vbd.StructureByteStride = 0;
-	//typedef struct D3D11_SUBRESOURCE_DATA
-	//{
-	//	const void *pSysMem;
-	//	UINT SysMemPitch; // 정점버퍼에서는 안씀
-	//	UINT SysMemSlicePitch; // 정점버퍼에서는 안씀
-	//} 	D3D11_SUBRESOURCE_DATA;
-
 	D3D11_SUBRESOURCE_DATA vinitData;
-	vinitData.pSysMem = vertices; // 정점버퍼를 초기화할 자료를 담은 시스템 메모리 배열
-	HR(md3dDevice->CreateBuffer(&vbd, &vinitData, &mBoxVB));
+	vinitData.pSysMem = &vertices[0];
+	HR(md3dDevice->CreateBuffer(&vbd, &vinitData, &mVB));
 
+	//
+	// Pack the indices of all the meshes into one index buffer.
+	//
 
-	// 인덱스 버퍼 생성
-
-	UINT indices[] = {
-		// 앞면
-		0, 1, 2,
-		0, 2, 3,
-
-		// 뒷면
-		4, 6, 5,
-		4, 7, 6,
-
-		// 왼쪽 면
-		4, 5, 1,
-		4, 1, 0,
-
-		// 오른쪽 면
-		3, 2, 6,
-		3, 6, 7,
-
-		// 윗면
-		1, 5, 6,
-		1, 6, 2,
-
-		// 아랫면
-		4, 0, 3,
-		4, 3, 7
-	};
-
-	// 버텍스 버퍼와 비슷하지만, 인덱스 버퍼로 바인딩한다.
 	D3D11_BUFFER_DESC ibd;
 	ibd.Usage = D3D11_USAGE_IMMUTABLE;
-	ibd.ByteWidth = sizeof(UINT) * 36;
+	ibd.ByteWidth = sizeof(UINT) * mGridIndexCount;
 	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	ibd.CPUAccessFlags = 0;
 	ibd.MiscFlags = 0;
-	ibd.StructureByteStride = 0;
-
-	// 색인버퍼 초기화 자료 지정
 	D3D11_SUBRESOURCE_DATA iinitData;
-	iinitData.pSysMem = indices;
-	HR(md3dDevice->CreateBuffer(&ibd, &iinitData, &mBoxIB));
+	iinitData.pSysMem = &grid.Indices[0];
+	HR(md3dDevice->CreateBuffer(&ibd, &iinitData, &mIB));
 }
 
-void BoxApp::BuildFX()
+void HillsApp::BuildFX()
 {
 	DWORD shaderFlags = 0;
 #if defined( DEBUG ) || defined( _DEBUG )
@@ -361,7 +345,7 @@ void BoxApp::BuildFX()
 	mfxWorldViewProj = mFX->GetVariableByName("gWorldViewProj")->AsMatrix(); // 상수 매트릭스 바인딩을 위해 포인터 저장
 }
 
-void BoxApp::BuildVertexLayout()
+void HillsApp::BuildVertexLayout()
 {
 	// 정점 구조체의 각성분이 어떤 용도인지 설정
 
@@ -392,4 +376,9 @@ void BoxApp::BuildVertexLayout()
 
 	HR(md3dDevice->CreateInputLayout(vertexDesc, 2, passDesc.pIAInputSignature,
 		passDesc.IAInputSignatureSize, &mInputLayout));
+}
+
+float HillsApp::GetHeight(float x, float z)const
+{
+	return 0.3f*(z*sinf(0.1f*x) + x*cosf(0.1f*z));
 }
