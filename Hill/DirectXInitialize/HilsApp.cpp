@@ -1,76 +1,16 @@
-//***************************************************************************************
-// HillsDemo.cpp by Frank Luna (C) 2011 All Rights Reserved.
-//
-// Demonstrates drawing hills using a grid and 2D function to set the height of each vertex.
-//
-// Controls:
-//		Hold the left mouse button down and move the mouse to rotate.
-//      Hold the right mouse button down to zoom in and out.
-//
-//***************************************************************************************
 
 #include "stdafx.h"
+#include "HillsApp.h"
 #include "D3DApp.h"
 #include "d3dx11Effect.h"
 #include "GeometryGenerator.h"
 #include "MathHelper.h"
 
-struct Vertex
-{
-	XMFLOAT3 Pos;
-	XMFLOAT4 Color;
-};
-
-class HillsApp : public D3DApp
-{
-public:
-	HillsApp(HINSTANCE hInstance);
-	~HillsApp();
-
-	bool Init();
-	void OnResize();
-	void UpdateScene(float dt);
-	void DrawScene();
-
-	void OnMouseDown(WPARAM btnState, int x, int y);
-	void OnMouseUp(WPARAM btnState, int x, int y);
-	void OnMouseMove(WPARAM btnState, int x, int y);
-
-private:
-	float GetHeight(float x, float z)const;
-	void BuildGeometryBuffers();
-	void BuildFX();
-	void BuildVertexLayout();
-
-private:
-	ID3D11Buffer* mVB;
-	ID3D11Buffer* mIB;
-
-	ID3DX11Effect* mFX;
-	ID3DX11EffectTechnique* mTech;
-	ID3DX11EffectMatrixVariable* mfxWorldViewProj;
-
-	ID3D11InputLayout* mInputLayout;
-
-	// Define transformations from local spaces to world space.
-	XMFLOAT4X4 mGridWorld;
-
-	UINT mGridIndexCount;
-
-	XMFLOAT4X4 mView;
-	XMFLOAT4X4 mProj;
-
-	float mTheta;
-	float mPhi;
-	float mRadius;
-
-	POINT mLastMousePos;
-};
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
 {
-	// Enable run-time memory check for debug builds.
+	// 디버그 빌드를 위한 처리
 #if defined(DEBUG) | defined(_DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
@@ -130,12 +70,12 @@ void HillsApp::OnResize()
 
 void HillsApp::UpdateScene(float dt)
 {
-	// Convert Spherical to Cartesian coordinates.
+	// 스피리컬 각도를 카테시안으로 재정의
 	float x = mRadius*sinf(mPhi)*cosf(mTheta);
 	float z = mRadius*sinf(mPhi)*sinf(mTheta);
 	float y = mRadius*cosf(mPhi);
 
-	// Build the view matrix.
+	// 시야 매트릭스 설정
 	XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
 	XMVECTOR target = XMVectorZero();
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -158,7 +98,7 @@ void HillsApp::DrawScene()
 	md3dImmediateContext->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
 	md3dImmediateContext->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
 
-	// Set constants
+	// 상수 버퍼 설정
 
 	XMMATRIX view = XMLoadFloat4x4(&mView);
 	XMMATRIX proj = XMLoadFloat4x4(&mProj);
@@ -169,7 +109,7 @@ void HillsApp::DrawScene()
 	mTech->GetDesc(&techDesc);
 	for (UINT p = 0; p < techDesc.Passes; ++p)
 	{
-		// Draw the grid.
+		// 그리드를 그린다.
 		mfxWorldViewProj->SetMatrix(reinterpret_cast<float*>(&worldViewProj));
 		mTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
 		md3dImmediateContext->DrawIndexed(mGridIndexCount, 0, 0);
@@ -195,27 +135,27 @@ void HillsApp::OnMouseMove(WPARAM btnState, int x, int y)
 {
 	if ((btnState & MK_LBUTTON) != 0)
 	{
-		// Make each pixel correspond to a quarter of a degree.
+		// 픽셀당 .25 도 처리
 		float dx = XMConvertToRadians(0.25f*static_cast<float>(x - mLastMousePos.x));
 		float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
 
-		// Update angles based on input to orbit camera around box.
+		// 박스에 따른 각도 처리
 		mTheta += dx;
 		mPhi += dy;
 
-		// Restrict the angle mPhi.
+		// 파이 제안
 		mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
 	}
 	else if ((btnState & MK_RBUTTON) != 0)
 	{
-		// Make each pixel correspond to 0.2 unit in the scene.
+		// 씬에 따라서 처리
 		float dx = 0.2f*static_cast<float>(x - mLastMousePos.x);
 		float dy = 0.2f*static_cast<float>(y - mLastMousePos.y);
 
-		// Update the camera radius based on input.
+		// 카메라 각도 처리
 		mRadius += dx - dy;
 
-		// Restrict the radius.
+		// 각도 제한
 		mRadius = MathHelper::Clamp(mRadius, 50.0f, 500.0f);
 	}
 
@@ -239,9 +179,8 @@ void HillsApp::BuildGeometryBuffers()
 	mGridIndexCount = grid.Indices.size();
 
 	//
-	// Extract the vertex elements we are interested and apply the height function to
-	// each vertex.  In addition, color the vertices based on their height so we have
-	// sandy looking beaches, grassy low hills, and snow mountain peaks.
+	// 높에 따른 버텍스 생성
+	// 높이에 따라서 색 조절을 처리해줘서, 해안, 모래밭, 잔디밭, 눈 산을 처리해준다.
 	//
 
 	std::vector<Vertex> vertices(grid.Vertices.size());
@@ -416,14 +355,14 @@ void HillsApp::BuildFX()
 
 void HillsApp::BuildVertexLayout()
 {
-	// Create the vertex input layout.
+	// 버텍스 레이아웃 생성
 	D3D11_INPUT_ELEMENT_DESC vertexDesc[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 
-	// Create the input layout
+	// 인풋 레이아웃 생성
 	D3DX11_PASS_DESC passDesc;
 	mTech->GetPassByIndex(0)->GetDesc(&passDesc);
 	HR(md3dDevice->CreateInputLayout(vertexDesc, 2, passDesc.pIAInputSignature,
