@@ -39,8 +39,6 @@ private:
 	ID3DX11EffectMatrixVariable* mfxWorldViewProj = nullptr;
 
 	ID3D11InputLayout* mInputLayout = nullptr;
-
-	// Define transformations from local spaces to world space.
 	XMFLOAT4X4 mGridWorld;
 
 	UINT mGridIndexCount;
