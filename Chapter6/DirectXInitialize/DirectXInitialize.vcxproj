@@ -91,6 +91,7 @@
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="LightHelper.h" />
+    <ClInclude Include="LightingDemo.h" />
     <ClInclude Include="MathHelper.h" />
     <ClInclude Include="RHID3D11Device.h" />
     <ClInclude Include="AppMain.h" />
@@ -110,6 +111,7 @@
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="LightHelper.cpp" />
+    <ClCompile Include="LightingDemo.cpp" />
     <ClCompile Include="mainlauncher.cpp" />
     <ClCompile Include="MathHelper.cpp" />
     <ClCompile Include="RHID3D11Device.cpp" />
@@ -133,6 +135,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\FX\color.fx" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\FX\LightHelper.fx">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\FX\Lighting.fx">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

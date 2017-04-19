@@ -3,6 +3,7 @@
 #include "ShapesDemo.h"
 #include "SkullDemo.h"
 #include "WaveApp.h"
+#include "LightingDemo.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
@@ -14,7 +15,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	//HillsApp theApp(hInstance);
 	//ShapesDemo theApp(hInstance);
 	//SkullDemo theApp(hInstance);
-	WaveApp theApp(hInstance);
+	//WaveApp theApp(hInstance);
+	LightingDemo theApp(hInstance);
 
 	if (!theApp.Init())
 		return 0;

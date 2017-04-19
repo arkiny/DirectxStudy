@@ -35,6 +35,9 @@
     <Filter Include="Chapter6\Wave">
       <UniqueIdentifier>{f52340e4-6055-408e-8bd5-ab2650ce194c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Chapter7">
+      <UniqueIdentifier>{48ba5cd9-5c83-4b25-9a8b-db4637a4f4af}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -94,6 +97,9 @@
     <ClInclude Include="Waves.h">
       <Filter>Chapter6\Wave</Filter>
     </ClInclude>
+    <ClInclude Include="LightingDemo.h">
+      <Filter>Chapter7</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RHID3D11Device.cpp">
@@ -135,14 +141,15 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>App</Filter>
     </ClCompile>
-    <ClCompile Include="mainlauncher.cpp">
-      <Filter>Chapter6</Filter>
-    </ClCompile>
     <ClCompile Include="WaveApp.cpp">
       <Filter>Chapter6\Wave</Filter>
     </ClCompile>
     <ClCompile Include="Waves.cpp">
       <Filter>Chapter6\Wave</Filter>
+    </ClCompile>
+    <ClCompile Include="mainlauncher.cpp" />
+    <ClCompile Include="LightingDemo.cpp">
+      <Filter>Chapter7</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -162,5 +169,13 @@
     <None Include="..\FX\color.fx">
       <Filter>Fx</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\FX\LightHelper.fx">
+      <Filter>Fx</Filter>
+    </FxCompile>
+    <FxCompile Include="..\FX\Lighting.fx">
+      <Filter>Fx</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
